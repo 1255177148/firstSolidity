@@ -31,4 +31,6 @@ contract HelloWorldFactory {
     function callSetHello(uint256 _index, string memory newStr, uint256 _id) public {
         hws[_index].setHelloWorld(newStr, _id);
     }
+
+    
 }

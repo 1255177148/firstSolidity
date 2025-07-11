@@ -13,6 +13,7 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interf
 */
 contract FundMe {
     mapping(address => uint256) public addressToAmountFunded;
+    address[] keys;// 存储addressToAmountFunded的key
     bool public fundMeCompleted = false;//是否提款成功
     uint256 constant MINNUM_VALUE = 100 * 10**18; //每笔最低限制100美元
     uint256 constant TARGET_VALUE = 300 * 10**18; // 众筹的目标值
@@ -93,7 +94,7 @@ contract FundMe {
     退款操作
     */
     function refund() external {
-        require(fundMeCompleted, unicode"生产商已提款，不能退款");
+        require(!fundMeCompleted, unicode"生产商已提款，不能退款");
         uint256 amountToRefund = addressToAmountFunded[msg.sender];
         require(amountToRefund > 0, unicode"没有众筹过");
         require(

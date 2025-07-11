@@ -14,7 +14,7 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interf
 contract FundMe {
     mapping(address => uint256) public addressToAmountFunded;
     uint256 constant MINNUM_VALUE = 100 * 10**18; //每笔最低限制100美元
-    uint256 constant TARGET_VALUE = 1000 * 10**18; // 众筹的目标值
+    uint256 constant TARGET_VALUE = 300 * 10**18; // 众筹的目标值
     AggregatorV3Interface internal dataFeed;
     address owner; //合约的拥有者，也就是可以提款的人
 

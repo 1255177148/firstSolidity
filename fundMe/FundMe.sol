@@ -77,8 +77,13 @@ contract FundMe {
         /*
         三种交易金额的方法
         */
-        // 1、transfer
-        payable(owner).transfer(address(this).balance); //将usd转给owner
+        // 1、transfer，如果失败会回退交易
+        // payable(owner).transfer(address(this).balance); //将usd转给owner
+        // 2、send，会返回一个boolean，交易成功为true，失败为false
+        // bool successFlag = payable(owner).send(address(this).balance);
+        // 3、call,交易的时候可以加上信息，里面用了transfer，然后又加了data，同时会返回一个bool表示是否交易成功
+        bool successFlag;
+        (successFlag, ) = payable(owner).call{value: address(this).balance}("");
     }
 
     function transferOwnerShip(address newOwner) public {

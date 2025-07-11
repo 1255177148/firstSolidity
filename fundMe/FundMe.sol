@@ -13,6 +13,7 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interf
 */
 contract FundMe {
     mapping(address => uint256) public addressToAmountFunded;
+    bool public fundMeCompleted = false;//是否提款成功
     uint256 constant MINNUM_VALUE = 100 * 10**18; //每笔最低限制100美元
     uint256 constant TARGET_VALUE = 300 * 10**18; // 众筹的目标值
     AggregatorV3Interface internal dataFeed;
@@ -71,7 +72,7 @@ contract FundMe {
     function getFund() external {
         require(owner == msg.sender, unicode"无权提取");
         require(
-            convertEthToUsd(address(this).balance) >= MINNUM_VALUE,
+            convertEthToUsd(address(this).balance) >= TARGET_VALUE,
             unicode"没有达到目标额度，不能提取"
         );
         /*
@@ -84,6 +85,25 @@ contract FundMe {
         // 3、call,交易的时候可以加上信息，里面用了transfer，然后又加了data，同时会返回一个bool表示是否交易成功
         bool successFlag;
         (successFlag, ) = payable(owner).call{value: address(this).balance}("");
+        require(successFlag, unicode"交易失败");
+        fundMeCompleted = true;// 标记已提款成功
+    }
+
+    /*
+    退款操作
+    */
+    function refund() external {
+        require(fundMeCompleted, unicode"生产商已提款，不能退款");
+        uint256 amountToRefund = addressToAmountFunded[msg.sender];
+        require(amountToRefund > 0, unicode"没有众筹过");
+        require(
+            convertEthToUsd(address(this).balance) < TARGET_VALUE,
+            unicode"达到目标额度，不能退款"
+        );
+        bool successFlag;
+        (successFlag, ) = payable(msg.sender).call{value: amountToRefund}("");
+        require(successFlag, unicode"交易失败");
+        addressToAmountFunded[msg.sender] = 0; //清空众筹金额
     }
 
     function transferOwnerShip(address newOwner) public {

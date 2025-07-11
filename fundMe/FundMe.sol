@@ -38,7 +38,7 @@ contract FundMe {
     }
 
     function fund() external payable {
-        require(convertEthToUsd(msg.value) < MINNUM_VALUE, unicode"最小额度为100美元");
+        require(convertEthToUsd(msg.value) >= MINNUM_VALUE, unicode"最小额度为100美元");
         addressToAmountFunded[msg.sender] += msg.value;
     }
 

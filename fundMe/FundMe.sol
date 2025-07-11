@@ -13,18 +13,22 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interf
 */
 contract FundMe {
     mapping(address => uint256) public addressToAmountFunded;
-    address[] keys;// 存储addressToAmountFunded的key
-    bool public fundMeCompleted = false;//是否提款成功
+    address[] keys; // 存储addressToAmountFunded的key
+    bool public fundMeCompleted = false; //是否提款成功
     uint256 constant MINNUM_VALUE = 100 * 10**18; //每笔最低限制100美元
     uint256 constant TARGET_VALUE = 300 * 10**18; // 众筹的目标值
     AggregatorV3Interface internal dataFeed;
     address owner; //合约的拥有者，也就是可以提款的人
+    uint256 deploymentTimestamp; // 合约部署时的时间戳
+    uint256 lockTime; // 锁定众筹的时间,单位为秒
 
-    constructor() {
+    constructor(uint256 _lockTime) {
         owner = msg.sender; //获取部署合约的地址
         dataFeed = AggregatorV3Interface(
             0x694AA1769357215DE4FAC081bf1f309aDC325306
         );
+        deploymentTimestamp = block.timestamp;
+        lockTime = _lockTime;
     }
 
     /**
@@ -46,6 +50,10 @@ contract FundMe {
      * @notice 众筹函数。可以用eth购买商品，然后转入我们账户，就可以收款了
      */
     function fund() external payable {
+        require(
+            block.timestamp < deploymentTimestamp + lockTime,
+            unicode"众筹窗口已关闭"
+        );
         require(
             convertEthToUsd(msg.value) >= MINNUM_VALUE,
             unicode"最小额度为100美元"
@@ -70,8 +78,7 @@ contract FundMe {
     /*
      * 提取众筹金额
      */
-    function getFund() external {
-        require(owner == msg.sender, unicode"无权提取");
+    function getFund() external windowOpen onlyOwner{
         require(
             convertEthToUsd(address(this).balance) >= TARGET_VALUE,
             unicode"没有达到目标额度，不能提取"
@@ -87,7 +94,7 @@ contract FundMe {
         bool successFlag;
         (successFlag, ) = payable(owner).call{value: address(this).balance}("");
         require(successFlag, unicode"交易失败");
-        fundMeCompleted = true;// 标记已提款成功
+        fundMeCompleted = true; // 标记已提款成功
     }
 
     /*
@@ -107,8 +114,23 @@ contract FundMe {
         addressToAmountFunded[msg.sender] = 0; //清空众筹金额
     }
 
-    function transferOwnerShip(address newOwner) public {
-        require(msg.sender == owner, unicode"无权调用此函数");
+    function transferOwnerShip(address newOwner) public onlyOwner {
         owner = newOwner;
+    }
+
+    /*
+     * 修改器，类似于切面
+     */
+    modifier windowOpen() {
+        require(
+            block.timestamp >= deploymentTimestamp + lockTime,
+            unicode"正在众筹期间，不能交易"
+        );
+        _; //这里类似于AOP，切面，下划线表示其它的代码在上面这行之后运行，也就是此修改器在开头就运行
+    }
+
+    modifier onlyOwner() {
+        require(owner == msg.sender, unicode"无权调用此函数");
+        _;
     }
 }

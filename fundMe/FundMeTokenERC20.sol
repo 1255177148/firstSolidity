@@ -37,6 +37,6 @@ contract FundMeTokenERC20 is ERC20 {
         // 提取通证，这里先没有操作
 
         // 清空通证
-        _burn(msg.sender, fundMe.getFundersToAmount(msg.sender));
+        _burn(msg.sender, balanceOf(msg.sender));
     }
 }

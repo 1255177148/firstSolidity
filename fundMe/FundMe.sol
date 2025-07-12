@@ -21,6 +21,7 @@ contract FundMe {
     address owner; //合约的拥有者，也就是可以提款的人
     uint256 deploymentTimestamp; // 合约部署时的时间戳
     uint256 lockTime; // 锁定众筹的时间,单位为秒
+    address erc20Addr;
 
     constructor(uint256 _lockTime) {
         owner = msg.sender; //获取部署合约的地址
@@ -44,6 +45,19 @@ contract FundMe {
             /*uint80 answeredInRound*/
         ) = dataFeed.latestRoundData();
         return answer;
+    }
+
+    function getFundersToAmount(address addr) public view returns (uint256) {
+        return addressToAmountFunded[addr];
+    }
+
+    function setFunderToAmount(address addr, uint256 amount) public {
+        require(erc20Addr == msg.sender, unicode"无权调用此函数");
+        addressToAmountFunded[addr] = amount;
+    }
+
+    function setErc20Addr(address addr) public onlyOwner {
+        erc20Addr = addr;
     }
 
     /*
